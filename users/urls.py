@@ -1,7 +1,8 @@
 from django.urls import path
+from . import views
 
 app_name = 'users'
 
 urlpatterns = [
-    # Здесь будут ваши URL для приложения users
+    path('register/', views.UserCreateAPIView.as_view(), name='register'),
 ]
