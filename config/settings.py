@@ -5,10 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'your_secret_key')  # Используйте os.environ.get с значением по умолчанию
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'  # Преобразуйте строку в boolean
+SECRET_KEY = os.getenv("SECRET_KEY")
+DEBUG = os.getenv("DEBUG", "False") == "True"
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
@@ -23,9 +24,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_yasg',
-    'users',  # Добавим позже
-    'habits',  # Добавим позже
-    'telegram_bot', # Добавим позже
+    'users',
+    'habits',
+    'telegram_bot',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,10 @@ CELERY_TIMEZONE = 'UTC'
 
 # Telegram bot token
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+
+CACHES = {
+"default": { "BACKEND":
+"django.core.cache.backends.redis.RedisCache",
+"LOCATION": "redis://127.0.0.1:6379",
+}
+}
