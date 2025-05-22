@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -170,14 +171,17 @@ def test_habit_validators(user):
     """
     Тест для валидаторов модели Habit.
     """
-    with pytest.raises(Exception):
-        Habit.objects.create(
+    with pytest.raises(
+        ValidationError
+    ):
+        habit = Habit(  # Создаем экземпляр, но не сохраняем сразу
             user=user,
             place="Home",
             time="10:00:00",
             action="Read a book",
             is_pleasant=False,
             periodicity=1,
-            execution_time=150,  # Invalid execution time
+            execution_time=150,
             is_public=True,
         )
+        habit.full_clean()  # Вызываем валидаторы

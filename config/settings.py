@@ -131,6 +131,7 @@ CELERY_TIMEZONE = "UTC"
 
 # Telegram bot token
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 CACHES = {
     "default": {
@@ -140,3 +141,5 @@ CACHES = {
 }
 
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
+
+SWAGGER_USE_COMPAT_RENDERERS = False

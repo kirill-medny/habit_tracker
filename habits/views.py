@@ -26,7 +26,7 @@ class HabitListAPIView(generics.ListAPIView):
         """
         Возвращает только привычки текущего пользователя.
         """
-        return Habit.objects.filter(user=self.request.user)
+        return Habit.objects.filter(user=self.request.user).order_by("id")
 
 
 class HabitPublicListAPIView(generics.ListAPIView):
