@@ -22,9 +22,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path(
-        "api/token/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"
-    ),  # Используем наш view
+    path("api/token/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/users/", include("users.urls", namespace="users")),
     path("api/habits/", include("habits.urls", namespace="habits")),
