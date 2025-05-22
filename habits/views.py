@@ -1,13 +1,15 @@
 from rest_framework import generics, permissions
+from rest_framework.exceptions import PermissionDenied
+
 from .models import Habit
 from .serializers import HabitSerializer
-from rest_framework.exceptions import PermissionDenied
 
 
 class HabitCreateAPIView(generics.CreateAPIView):
     """
     Представление для создания привычки.
     """
+
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -16,6 +18,7 @@ class HabitListAPIView(generics.ListAPIView):
     """
     Представление для просмотра списка привычек текущего пользователя.
     """
+
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -30,6 +33,7 @@ class HabitPublicListAPIView(generics.ListAPIView):
     """
     Представление для просмотра списка публичных привычек.
     """
+
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -44,6 +48,7 @@ class HabitRetrieveAPIView(generics.RetrieveAPIView):
     """
     Представление для просмотра информации о привычке.
     """
+
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Habit.objects.all()
@@ -62,6 +67,7 @@ class HabitUpdateAPIView(generics.UpdateAPIView):
     """
     Представление для редактирования привычки.
     """
+
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Habit.objects.all()
@@ -80,6 +86,7 @@ class HabitDestroyAPIView(generics.DestroyAPIView):
     """
     Представление для удаления привычки.
     """
+
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Habit.objects.all()
