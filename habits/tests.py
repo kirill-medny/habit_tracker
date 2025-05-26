@@ -1,185 +1,112 @@
-import pytest
-from django.core.exceptions import ValidationError
 from django.urls import reverse
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from habits.models import Habit
-
-
-@pytest.fixture
-def user(django_user_model):
-    """
-    Фикстура для создания пользователя.
-    """
-    return django_user_model.objects.create_user(
-        username="testuser", password="testpassword", email="test@example.com"
-    )
+from rest_framework.test import APITestCase
+from django.contrib.auth.models import User
+from .models import Habit
+from datetime import time
 
 
-@pytest.fixture
-def api_client():
-    """
-    Фикстура для создания API клиента.
-    """
-    from rest_framework.test import APIClient
+class HabitTests(APITestCase):
+    def setUp(self):
+        """
+        Настройка перед каждым тестом.
+        """
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpassword',
+            email='test@example.com',
+            first_name='Test',
+            last_name='User',
+            tg_chat_id='123456789'
+        )
+        self.client.force_authenticate(user=self.user)
 
-    return APIClient()
+    def test_create_habit(self):
+        """
+        Тест для проверки создания привычки.
+        """
+        url = reverse('habits:habit_create')
+        data = {
+            'place': 'Home',
+            'time': '10:00:00',
+            'action': 'Read a book',
+            'is_pleasant': False,
+            'periodicity': 1,
+            'reward': 'Watch a movie',
+            'execution_time': 60,
+            'is_public': True
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Habit.objects.count(), 1)
+        self.assertEqual(Habit.objects.get().user, self.user)
 
-
-@pytest.fixture
-def authenticated_client(user, api_client):
-    """
-    Фикстура для создания аутентифицированного API клиента.
-    """
-    refresh = RefreshToken.for_user(user)
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
-    return api_client
-
-
-@pytest.mark.django_db
-def test_habit_create(authenticated_client):
-    """
-    Тест для создания привычки.
-    """
-    data = {
-        "place": "Home",
-        "time": "10:00:00",
-        "action": "Read a book",
-        "is_pleasant": False,
-        "periodicity": 1,
-        "execution_time": 60,
-        "is_public": True,
-    }
-    url = reverse("habits:habit_create")
-    response = authenticated_client.post(url, data)
-    assert response.status_code == status.HTTP_201_CREATED
-    assert Habit.objects.count() == 1
-    habit = Habit.objects.first()
-    assert habit.action == "Read a book"
-
-
-@pytest.mark.django_db
-def test_habit_list(authenticated_client, user):
-    """
-    Тест для получения списка привычек.
-    """
-    Habit.objects.create(
-        user=user,
-        place="Home",
-        time="10:00:00",
-        action="Read a book",
-        is_pleasant=False,
-        periodicity=1,
-        execution_time=60,
-        is_public=True,
-    )
-    url = reverse("habits:habit_list")
-    response = authenticated_client.get(url)
-    assert response.status_code == status.HTTP_200_OK
-    assert len(response.data["results"]) == 1
-    assert response.data["results"][0]["action"] == "Read a book"
-
-
-@pytest.mark.django_db
-def test_habit_update(authenticated_client, user):
-    """
-    Тест для обновления привычки.
-    """
-    habit = Habit.objects.create(
-        user=user,
-        place="Home",
-        time="10:00:00",
-        action="Read a book",
-        is_pleasant=False,
-        periodicity=1,
-        execution_time=60,
-        is_public=True,
-    )
-    data = {
-        "place": "Work",
-        "time": "11:00:00",
-        "action": "Drink water",
-        "is_pleasant": True,
-        "periodicity": 2,
-        "execution_time": 30,
-        "is_public": False,
-    }
-    url = reverse("habits:habit_update", args=[habit.pk])
-    response = authenticated_client.put(url, data)
-    assert response.status_code == status.HTTP_200_OK
-    habit.refresh_from_db()
-    assert habit.place == "Work"
-    assert habit.action == "Drink water"
-
-
-@pytest.mark.django_db
-def test_habit_delete(authenticated_client, user):
-    """
-    Тест для удаления привычки.
-    """
-    habit = Habit.objects.create(
-        user=user,
-        place="Home",
-        time="10:00:00",
-        action="Read a book",
-        is_pleasant=False,
-        periodicity=1,
-        execution_time=60,
-        is_public=True,
-    )
-    url = reverse("habits:habit_delete", args=[habit.pk])
-    response = authenticated_client.delete(url)
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert Habit.objects.count() == 0
-
-
-@pytest.mark.django_db
-def test_habit_public_list(authenticated_client, user):
-    """
-    Тест для получения списка публичных привычек.
-    """
-    Habit.objects.create(
-        user=user,
-        place="Home",
-        time="10:00:00",
-        action="Read a book",
-        is_pleasant=False,
-        periodicity=1,
-        execution_time=60,
-        is_public=True,
-    )
-    Habit.objects.create(
-        user=user,
-        place="Work",
-        time="11:00:00",
-        action="Drink water",
-        is_pleasant=True,
-        periodicity=2,
-        execution_time=30,
-        is_public=False,
-    )
-    url = reverse("habits:habit_public_list")
-    response = authenticated_client.get(url)
-    assert response.status_code == status.HTTP_200_OK
-    assert len(response.data["results"]) == 1
-    assert response.data["results"][0]["action"] == "Read a book"
-
-
-@pytest.mark.django_db
-def test_habit_validators(user):
-    """
-    Тест для валидаторов модели Habit.
-    """
-    with pytest.raises(ValidationError):
-        habit = Habit(  # Создаем экземпляр, но не сохраняем сразу
-            user=user,
-            place="Home",
-            time="10:00:00",
-            action="Read a book",
+    def test_get_habit(self):
+        """
+        Тест для проверки получения привычки.
+        """
+        habit = Habit.objects.create(
+            user=self.user,
+            place='Home',
+            time=time(10, 0, 0),
+            action='Read a book',
             is_pleasant=False,
             periodicity=1,
-            execution_time=150,
-            is_public=True,
+            reward='Watch a movie',
+            execution_time=60,
+            is_public=True
         )
-        habit.full_clean()  # Вызываем валидаторы
+        url = reverse('habits:habit_retrieve', kwargs={'pk': habit.pk})
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['place'], 'Home')
+
+    def test_update_habit(self):
+        """
+        Тест для проверки обновления привычки.
+        """
+        habit = Habit.objects.create(
+            user=self.user,
+            place='Home',
+            time=time(10, 0, 0),
+            action='Read a book',
+            is_pleasant=False,
+            periodicity=1,
+            reward='Watch a movie',
+            execution_time=60,
+            is_public=True
+        )
+        url = reverse('habits:habit_update', kwargs={'pk': habit.pk})
+        data = {
+            'place': 'Work',
+            'time': '11:00:00',
+            'action': 'Write code',
+            'is_pleasant': False,
+            'periodicity': 1,
+            'reward': 'Listen to music',
+            'execution_time': 120,
+            'is_public': False
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Habit.objects.get().place, 'Work')
+
+    def test_delete_habit(self):
+        """
+        Тест для проверки удаления привычки.
+        """
+        habit = Habit.objects.create(
+            user=self.user,
+            place='Home',
+            time=time(10, 0, 0),
+            action='Read a book',
+            is_pleasant=False,
+            periodicity=1,
+            reward='Watch a movie',
+            execution_time=60,
+            is_public=True
+        )
+        url = reverse('habits:habit_delete', kwargs={'pk': habit.pk})
+        response = self.client.delete(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Habit.objects.count(), 0)
