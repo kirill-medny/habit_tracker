@@ -135,11 +135,13 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "BACKEND": os.getenv("BACKEND"),
+        "LOCATION": os.getenv("LOCATION"),
     }
 }
 
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
 SWAGGER_USE_COMPAT_RENDERERS = False
+
+AUTH_USER_MODEL = "users.User"

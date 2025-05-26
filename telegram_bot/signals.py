@@ -1,36 +1,28 @@
-import os
-
-from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from habits.models import Habit
-
-from .tasks import send_telegram_message
+from telegram_bot.tasks import send_telegram_notification
 
 
 @receiver(post_save, sender=Habit)
 def habit_post_save(sender, instance, created, **kwargs):
     """
-    Отправляет уведомление в Telegram при создании или изменении привычки.
+    Сигнал, который отправляет уведомление в Telegram при создании или изменении привычки.
     """
-    if settings.DEBUG:  # Отключаем отправку сообщений в DEBUG режиме
-        return
-
-    # user = instance.user
-    chat_id = os.environ.get(
-        "TELEGRAM_CHAT_ID"
-    )  # Получаем chat_id из переменной окружения
-
-    if chat_id is None:
-        print("TELEGRAM_CHAT_ID is not set in environment variables.")
-        return
-
     if created:
         message = f"Создана новая привычка: {instance.action} в {instance.time} в {instance.place}"
     else:
-        message = f"Привычка обновлена: {instance.action} в {instance.time} в {instance.place}"
+        message = f"Обновлена привычка: {instance.action} в {instance.time} в {instance.place}"
 
-    send_telegram_message.delay(
-        chat_id, message
-    )  # используем Celery для отправки сообщения
+    # Рассчитываем время до выполнения привычки (в секундах)
+    now = timezone.now().time()
+    habit_time = instance.time
+
+    # Если время выполнения привычки уже прошло сегодня, то планируем на завтра
+    if habit_time <= now:
+        return
+
+    # Планируем отправку уведомления
+    send_telegram_notification.apply_async(args=[instance.user_id, message])

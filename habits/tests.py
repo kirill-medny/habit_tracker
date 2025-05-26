@@ -171,9 +171,7 @@ def test_habit_validators(user):
     """
     Тест для валидаторов модели Habit.
     """
-    with pytest.raises(
-        ValidationError
-    ):
+    with pytest.raises(ValidationError):
         habit = Habit(  # Создаем экземпляр, но не сохраняем сразу
             user=user,
             place="Home",

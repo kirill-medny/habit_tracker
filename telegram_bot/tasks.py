@@ -1,13 +1,25 @@
+import os
+
 import requests
 from celery import shared_task
 from django.conf import settings
 
+chat_id = os.getenv("TELEGRAM_CHAT_ID")
+bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+
 
 @shared_task
-def send_telegram_message(chat_id, message):
+def send_telegram_notification(user_id, message):
     """
     Отправляет сообщение в Telegram.
     """
+
+    from users.models import (
+        User,
+    )  # Импортируем модель User здесь, чтобы избежать циклических зависимостей
+
+    user = User.objects.get(pk=user_id)
+    chat_id = user.tg_chat_id
     bot_token = settings.TELEGRAM_BOT_TOKEN
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     data = {
