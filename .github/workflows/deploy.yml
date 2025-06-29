@@ -24,7 +24,8 @@ jobs:
       - name: Configure Poetry
         run: |
           poetry config virtualenvs.in-project true
-          echo "::add-path::$(python -m site --user-base)/bin"
+          echo "POETRY_HOME=$(poetry config --list | grep '^ *cache_dir' | awk '{print $3}')" >> $GITHUB_ENV
+          echo "$(poetry config --list | grep '^ *cache_dir' | awk '{print $3}')/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: poetry install
