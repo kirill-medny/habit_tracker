@@ -38,6 +38,6 @@ black = "^25.1.0"
 pytest-cov = "^6.1.1"
 pytest-django = "^4.11.1"
 
-[tool.poetry.packages]
-include = "habit_tracker"  # Замените на имя вашей основной директории
-from = "."  # Указывает, что директория находится в корне проекта
+[[tool.poetry.packages]]
+include = "habit_tracker"
+from = "."
